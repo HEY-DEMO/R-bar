@@ -82,52 +82,24 @@ pub fn execute_window_command(hwnd: isize, cmd: WindowCommand) -> bool {
     match cmd {
         WindowCommand::Restore => {
             let _ = unsafe { ShowWindow(h, SW_RESTORE) };
-            let _ = unsafe {
-                PostMessageW(
-                    h,
-                    WM_SYSCOMMAND,
-                    WPARAM(cmd.syscommand_code()),
-                    LPARAM(0),
-                )
-            };
-            true
         }
         WindowCommand::Minimize => {
             let _ = unsafe { ShowWindow(h, SW_MINIMIZE) };
-            let _ = unsafe {
-                PostMessageW(
-                    h,
-                    WM_SYSCOMMAND,
-                    WPARAM(cmd.syscommand_code()),
-                    LPARAM(0),
-                )
-            };
-            true
         }
         WindowCommand::Maximize => {
             let _ = unsafe { ShowWindow(h, SW_MAXIMIZE) };
-            let _ = unsafe {
-                PostMessageW(
-                    h,
-                    WM_SYSCOMMAND,
-                    WPARAM(cmd.syscommand_code()),
-                    LPARAM(0),
-                )
-            };
-            true
         }
-        WindowCommand::Close => {
-            let _ = unsafe {
-                PostMessageW(
-                    h,
-                    WM_SYSCOMMAND,
-                    WPARAM(cmd.syscommand_code()),
-                    LPARAM(0),
-                )
-            };
-            true
-        }
+        WindowCommand::Close => {}
     }
+    let _ = unsafe {
+        PostMessageW(
+            h,
+            WM_SYSCOMMAND,
+            WPARAM(cmd.syscommand_code()),
+            LPARAM(0),
+        )
+    };
+    true
 }
 
 /// Displays the native Win32 window system menu at (x, y) coordinates and

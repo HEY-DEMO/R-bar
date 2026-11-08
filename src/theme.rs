@@ -32,6 +32,7 @@ pub enum ThemePreset {
         bg_color: String,
         opacity: f32,
         border_color: String,
+        corner_radius: Option<f32>,
     },
 }
 
@@ -42,6 +43,22 @@ impl ThemePreset {
             bg_color: bg_color.into(),
             opacity,
             border_color: border_color.into(),
+            corner_radius: None,
+        }
+    }
+
+    /// Constructs a custom theme preset with full properties including corner radius.
+    pub fn custom_with_radius(
+        bg_color: impl Into<String>,
+        opacity: f32,
+        border_color: impl Into<String>,
+        corner_radius: Option<f32>,
+    ) -> Self {
+        Self::Custom {
+            bg_color: bg_color.into(),
+            opacity,
+            border_color: border_color.into(),
+            corner_radius,
         }
     }
 
@@ -51,6 +68,7 @@ impl ThemePreset {
             bg_color: default_custom_bg(),
             opacity: default_custom_opacity(),
             border_color: default_custom_border(),
+            corner_radius: Some(4.0),
         }
     }
 
@@ -80,12 +98,15 @@ impl Serialize for ThemePreset {
                 bg_color,
                 opacity,
                 border_color,
+                corner_radius,
             } => {
                 #[derive(Serialize)]
                 struct CustomFields<'a> {
                     bg_color: &'a str,
                     opacity: f32,
                     border_color: &'a str,
+                    #[serde(skip_serializing_if = "Option::is_none")]
+                    corner_radius: Option<f32>,
                 }
                 let mut map = serializer.serialize_map(Some(1))?;
                 map.serialize_entry(
@@ -94,6 +115,7 @@ impl Serialize for ThemePreset {
                         bg_color,
                         opacity: *opacity,
                         border_color,
+                        corner_radius: *corner_radius,
                     },
                 )?;
                 map.end()
@@ -147,6 +169,8 @@ impl<'de> Deserialize<'de> for ThemePreset {
                     opacity: f32,
                     #[serde(default = "default_custom_border")]
                     border_color: String,
+                    #[serde(default)]
+                    corner_radius: Option<f32>,
                 }
 
                 while let Some(key) = access.next_key::<String>()? {
@@ -156,6 +180,7 @@ impl<'de> Deserialize<'de> for ThemePreset {
                             bg_color: fields.bg_color,
                             opacity: fields.opacity,
                             border_color: fields.border_color,
+                            corner_radius: fields.corner_radius,
                         });
                     } else if key.eq_ignore_ascii_case("type") {
                         let variant_name: String = access.next_value()?;
@@ -292,6 +317,7 @@ impl ThemeDefinition {
                 bg_color,
                 opacity,
                 border_color,
+                corner_radius,
             } => {
                 let opacity = opacity.clamp(0.0, 1.0);
                 let dwm_backdrop = if opacity < 1.0 {
@@ -304,7 +330,7 @@ impl ThemeDefinition {
                     bg_color: bg_color.clone(),
                     border_color: border_color.clone(),
                     border_width: 1.0,
-                    corner_radius: 4.0,
+                    corner_radius: corner_radius.unwrap_or(4.0),
                     accent_color: "#0078d4".to_string(),
                     text_color: "#ffffff".to_string(),
                     opacity,

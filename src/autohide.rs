@@ -205,9 +205,7 @@ pub fn set_window_topmost(hwnd: isize, topmost: bool) -> bool {
 }
 
 /// Sets the taskbar window's topmost z-order status. Alias for [`set_window_topmost`].
-pub fn set_taskbar_topmost(hwnd: isize, topmost: bool) -> bool {
-    set_window_topmost(hwnd, topmost)
-}
+pub use set_window_topmost as set_taskbar_topmost;
 
 /// Coordinates auto-hide state transitions, edge hover trigger detection, and bounding box geometry.
 #[derive(Debug, Clone, PartialEq, Eq)]
