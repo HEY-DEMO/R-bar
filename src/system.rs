@@ -15,7 +15,8 @@ use windows::Win32::System::Com::{
 use windows::Win32::System::Power::{GetSystemPowerStatus, SYSTEM_POWER_STATUS};
 use windows::Win32::System::SystemInformation::GetLocalTime;
 use windows::Win32::UI::WindowsAndMessaging::{
-    FindWindowW, IsWindowVisible, ShowWindow, SW_HIDE, SW_SHOW,
+    FindWindowExW, FindWindowW, IsWindowVisible, SetWindowPos, ShowWindow, HWND_TOPMOST, SWP_NOMOVE,
+    SWP_NOSIZE, SW_HIDE, SW_SHOW,
 };
 
 /// Represents snapshot of power and battery status.
@@ -280,6 +281,19 @@ pub fn find_native_tray_window() -> Option<HWND> {
     None
 }
 
+/// Finds the native Windows notification tray window (`TrayNotifyWnd`) inside the shell tray.
+pub fn find_tray_notify_window() -> Option<HWND> {
+    unsafe {
+        let tray_wnd = find_native_tray_window()?;
+        if let Ok(hwnd) = FindWindowExW(tray_wnd, HWND(std::ptr::null_mut()), w!("TrayNotifyWnd"), None) {
+            if !hwnd.0.is_null() {
+                return Some(hwnd);
+            }
+        }
+    }
+    None
+}
+
 /// Returns whether the native taskbar notification area is currently visible.
 pub fn is_native_tray_visible() -> bool {
     if let Some(hwnd) = find_native_tray_window() {
@@ -289,16 +303,33 @@ pub fn is_native_tray_visible() -> bool {
     }
 }
 
-/// Toggles visibility of the native Windows taskbar / notification area.
-/// Returns the new visibility state.
+/// Toggles visibility of the native Windows taskbar / notification area (`TrayNotifyWnd` inside `Shell_TrayWnd`).
+///
+/// When unhiding, positions the native tray topmost so background notification icons float
+/// above normal application windows. Returns the new visibility state.
 pub fn toggle_native_tray() -> bool {
     if let Some(hwnd) = find_native_tray_window() {
         let currently_visible = unsafe { IsWindowVisible(hwnd).as_bool() };
         unsafe {
             if currently_visible {
                 let _ = ShowWindow(hwnd, SW_HIDE);
+                if let Some(notify_hwnd) = find_tray_notify_window() {
+                    let _ = ShowWindow(notify_hwnd, SW_HIDE);
+                }
             } else {
                 let _ = ShowWindow(hwnd, SW_SHOW);
+                let _ = SetWindowPos(
+                    hwnd,
+                    HWND_TOPMOST,
+                    0,
+                    0,
+                    0,
+                    0,
+                    SWP_NOMOVE | SWP_NOSIZE,
+                );
+                if let Some(notify_hwnd) = find_tray_notify_window() {
+                    let _ = ShowWindow(notify_hwnd, SW_SHOW);
+                }
             }
         }
         !currently_visible

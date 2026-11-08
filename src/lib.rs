@@ -1,4 +1,5 @@
 pub mod appbar;
+pub mod autohide;
 pub mod config;
 pub mod controls;
 pub mod dwm;

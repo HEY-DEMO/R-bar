@@ -420,6 +420,19 @@ impl MultiMonitorManager {
         }
     }
 
+    /// Sets topmost z-order across all active monitor bars.
+    pub fn set_topmost(&self, topmost: bool) {
+        for bar in &self.bars {
+            crate::autohide::set_taskbar_topmost(bar.hwnd, topmost);
+        }
+    }
+
+    /// Yields topmost z-order when a fullscreen foreground application is active,
+    /// or restores topmost docking when fullscreen applications lose focus or exit.
+    pub fn set_fullscreen_yield(&self, fullscreen_active: bool) {
+        self.set_topmost(!fullscreen_active);
+    }
+
     /// Unregisters all AppBars and destroys their underlying windows cleanly.
     pub fn unregister_all(&mut self) {
         for bar in self.bars.drain(..) {
