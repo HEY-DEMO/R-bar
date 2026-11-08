@@ -10,7 +10,7 @@ use windows::Win32::Media::Audio::{
     eMultimedia, eRender, IMMDevice, IMMDeviceEnumerator, MMDeviceEnumerator,
 };
 use windows::Win32::System::Com::{
-    CoCreateInstance, CoInitializeEx, CLSCTX_ALL, COINIT_MULTITHREADED,
+    CoCreateInstance, CoInitializeEx, CLSCTX_ALL, COINIT_APARTMENTTHREADED,
 };
 use windows::Win32::System::Power::{GetSystemPowerStatus, SYSTEM_POWER_STATUS};
 use windows::Win32::System::SystemInformation::GetLocalTime;
@@ -115,9 +115,9 @@ where
     F: FnOnce(&IAudioEndpointVolume) -> windows::core::Result<T>,
 {
     unsafe {
-        // Initialize COM for this thread. RPC_E_CHANGED_MODE (0x80010106) is acceptable
-        // if COM was already initialized with a different apartment threading model.
-        let hr = CoInitializeEx(None, COINIT_MULTITHREADED);
+        // Initialize COM for this thread with apartment threading (STA) to remain
+        // compatible with winit / Slint UI and OLE drag-and-drop.
+        let hr = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
         if hr.is_err() && hr.0 != RPC_E_CHANGED_MODE {
             // Continue anyway to attempt using existing COM context
         }
