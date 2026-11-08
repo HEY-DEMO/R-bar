@@ -1,3 +1,7 @@
+import { Theme, ThemePalette } from "theme.slint";
+
+export { Theme, ThemePalette }
+
 export struct PinnedData {
     title: string,
     initial: string,
@@ -158,54 +162,65 @@ export component MainWindow inherits Window {
     title: "Taskbar";
     no-frame: true;
     always-on-top: true;
-    background: #1e1e1ecc;
     default-font-size: 12px;
     height: 48px;
 
+    in-out property <string> theme_name: "Glossy";
+    in-out property <bool> is_vertical: false;
     in property <[PinnedData]> pinned_items: [];
-    in property <bool> is_vertical: false;
     callback start_clicked();
     callback pinned_clicked(int);
 
-    if !is_vertical : HorizontalLayout {
-        padding-left: 8px;
-        padding-right: 8px;
-        alignment: start;
-        spacing: 4px;
+    // Active palette derived from Theme global
+    property <ThemePalette> current_palette: Theme.palette(theme_name);
 
-        StartButton {
-            is_vertical: false;
-            clicked => { root.start_clicked(); }
+    background: current_palette.background;
+
+    Rectangle {
+        border-width: current_palette.border-width;
+        border-color: current_palette.border-color;
+        border-radius: current_palette.corner-radius;
+
+        if !is_vertical : HorizontalLayout {
+            padding-left: 8px;
+            padding-right: 8px;
+            alignment: start;
+            spacing: 4px;
+
+            StartButton {
+                is_vertical: false;
+                clicked => { root.start_clicked(); }
+            }
+
+            for item[idx] in root.pinned_items: PinnedItemButton {
+                title: item.title;
+                initial: item.initial;
+                has_icon: item.has_icon;
+                icon: item.icon;
+                is_vertical: false;
+                clicked => { root.pinned_clicked(idx); }
+            }
         }
 
-        for item[idx] in root.pinned_items: PinnedItemButton {
-            title: item.title;
-            initial: item.initial;
-            has_icon: item.has_icon;
-            icon: item.icon;
-            is_vertical: false;
-            clicked => { root.pinned_clicked(idx); }
-        }
-    }
+        if is_vertical : VerticalLayout {
+            padding-top: 8px;
+            padding-bottom: 8px;
+            alignment: start;
+            spacing: 4px;
 
-    if is_vertical : VerticalLayout {
-        padding-top: 8px;
-        padding-bottom: 8px;
-        alignment: start;
-        spacing: 4px;
+            StartButton {
+                is_vertical: true;
+                clicked => { root.start_clicked(); }
+            }
 
-        StartButton {
-            is_vertical: true;
-            clicked => { root.start_clicked(); }
-        }
-
-        for item[idx] in root.pinned_items: PinnedItemButton {
-            title: item.title;
-            initial: item.initial;
-            has_icon: item.has_icon;
-            icon: item.icon;
-            is_vertical: true;
-            clicked => { root.pinned_clicked(idx); }
+            for item[idx] in root.pinned_items: PinnedItemButton {
+                title: item.title;
+                initial: item.initial;
+                has_icon: item.has_icon;
+                icon: item.icon;
+                is_vertical: true;
+                clicked => { root.pinned_clicked(idx); }
+            }
         }
     }
 }

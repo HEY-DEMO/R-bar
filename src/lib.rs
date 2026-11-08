@@ -6,4 +6,4 @@ pub mod launcher;
 pub mod shell;
 pub mod system;
 pub mod tasks;
-
+pub mod theme;
