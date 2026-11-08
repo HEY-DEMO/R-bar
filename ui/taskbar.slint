@@ -1,21 +1,38 @@
+import { Theme, ThemePalette } from "theme.slint";
+
+export { Theme, ThemePalette }
+
 export component MainWindow inherits Window {
     title: "Taskbar";
     no-frame: true;
     always-on-top: true;
-    background: #1e1e1ecc;
     default-font-size: 12px;
     height: 48px;
 
-    HorizontalLayout {
-        padding-left: 16px;
-        padding-right: 16px;
-        alignment: center;
+    in-out property <string> theme_name: "Glossy";
+    in-out property <bool> is_vertical: false;
 
-        Text {
-            text: "Taskbar Clone";
-            color: #ffffff;
-            vertical-alignment: center;
+    // Active palette derived from Theme global
+    property <ThemePalette> current_palette: Theme.palette(theme_name);
+
+    background: current_palette.background;
+
+    Rectangle {
+        border-width: current_palette.border-width;
+        border-color: current_palette.border-color;
+        border-radius: current_palette.corner-radius;
+
+        HorizontalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            alignment: center;
+
+            Text {
+                text: "Taskbar Clone";
+                color: current_palette.text-color;
+                vertical-alignment: center;
+                font-weight: current_palette.is-retro ? 700 : 400;
+            }
         }
     }
 }
-

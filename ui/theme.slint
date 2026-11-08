@@ -1,0 +1,86 @@
+export struct ThemePalette {
+    name: string,
+    background: color,
+    border-color: color,
+    border-width: length,
+    corner-radius: length,
+    accent-color: color,
+    text-color: color,
+    opacity: float,
+    is-retro: bool,
+    bevel-light: color,
+    bevel-dark: color,
+}
+
+export global Theme {
+    in-out property <string> current-theme: "Glossy";
+
+    out property <ThemePalette> glossy: {
+        name: "Glossy",
+        background: #1e1e1e99,
+        border-color: #ffffff33,
+        border-width: 1px,
+        corner-radius: 8px,
+        accent-color: #60cdff,
+        text-color: #ffffff,
+        opacity: 0.6,
+        is-retro: false,
+        bevel-light: #ffffff33,
+        bevel-dark: #00000000,
+    };
+
+    out property <ThemePalette> material: {
+        name: "Material",
+        background: #242424,
+        border-color: #333333,
+        border-width: 1px,
+        corner-radius: 4px,
+        accent-color: #0078d4,
+        text-color: #ffffff,
+        opacity: 1.0,
+        is-retro: false,
+        bevel-light: #333333,
+        bevel-dark: #1a1a1a,
+    };
+
+    out property <ThemePalette> retro: {
+        name: "Retro",
+        background: #c0c0c0,
+        border-color: #dfdfdf,
+        border-width: 2px,
+        corner-radius: 0px,
+        accent-color: #000080,
+        text-color: #000000,
+        opacity: 1.0,
+        is-retro: true,
+        bevel-light: #ffffff,
+        bevel-dark: #808080,
+    };
+
+    out property <ThemePalette> oled: {
+        name: "Oled",
+        background: #000000,
+        border-color: #222222,
+        border-width: 1px,
+        corner-radius: 0px,
+        accent-color: #ffffff,
+        text-color: #ffffff,
+        opacity: 1.0,
+        is-retro: false,
+        bevel-light: #222222,
+        bevel-dark: #000000,
+    };
+
+    pure public function palette(name: string) -> ThemePalette {
+        if name == "Material" {
+            return root.material;
+        }
+        if name == "Retro" {
+            return root.retro;
+        }
+        if name == "Oled" || name == "OLED" {
+            return root.oled;
+        }
+        return root.glossy;
+    }
+}
