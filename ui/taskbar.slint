@@ -1,0 +1,21 @@
+export component MainWindow inherits Window {
+    title: "Taskbar";
+    no-frame: true;
+    always-on-top: true;
+    background: #1e1e1ecc;
+    default-font-size: 12px;
+    height: 48px;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        alignment: center;
+
+        Text {
+            text: "Taskbar Clone";
+            color: #ffffff;
+            vertical-alignment: center;
+        }
+    }
+}
+
