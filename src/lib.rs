@@ -4,6 +4,7 @@ pub mod controls;
 pub mod dwm;
 pub mod events;
 pub mod geometry;
+pub mod icons;
 pub mod launcher;
 pub mod shell;
 pub mod system;
