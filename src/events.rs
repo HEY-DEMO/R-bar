@@ -10,11 +10,13 @@ use windows::Win32::Graphics::Gdi::{
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DeregisterShellHookWindow, DestroyWindow, DispatchMessageW,
-    GetMessageW, GetWindowLongPtrW, GetWindowRect, PostQuitMessage, RegisterClassExW,
-    RegisterShellHookWindow, RegisterWindowMessageW, SetWindowLongPtrW, TranslateMessage,
-    CREATESTRUCTW, GWLP_USERDATA, MSG, WINDOW_EX_STYLE, WNDCLASSEXW,
-    WS_POPUP, WM_CLOSE, WM_CREATE, WM_DESTROY, WM_DISPLAYCHANGE, WM_DPICHANGED,
+    GetDesktopWindow, GetMessageW, GetShellWindow, GetWindowLongPtrW, GetWindowRect,
+    PostQuitMessage, RegisterClassExW, RegisterShellHookWindow, RegisterWindowMessageW,
+    SetWindowLongPtrW, TranslateMessage, CREATESTRUCTW, GWLP_USERDATA, MSG, WINDOW_EX_STYLE,
+    WNDCLASSEXW, WS_POPUP, WM_CLOSE, WM_CREATE, WM_DESTROY, WM_DISPLAYCHANGE, WM_DPICHANGED,
 };
+
+pub use crate::autohide::is_rect_fullscreen;
 
 pub const HSHELL_WINDOWCREATED: u32 = 1;
 pub const HSHELL_WINDOWDESTROYED: u32 = 2;
@@ -61,6 +63,11 @@ pub fn is_window_fullscreen(hwnd: HWND) -> bool {
     if hwnd.0.is_null() {
         return false;
     }
+    unsafe {
+        if hwnd == GetDesktopWindow() || hwnd == GetShellWindow() {
+            return false;
+        }
+    }
     let mut rect = RECT::default();
     if unsafe { GetWindowRect(hwnd, &mut rect) }.is_err() {
         return false;
@@ -71,11 +78,10 @@ pub fn is_window_fullscreen(hwnd: HWND) -> bool {
         ..Default::default()
     };
     if unsafe { GetMonitorInfoW(hmonitor, &mut minfo) }.as_bool() {
-        let mon = minfo.rcMonitor;
-        rect.left <= mon.left
-            && rect.top <= mon.top
-            && rect.right >= mon.right
-            && rect.bottom >= mon.bottom
+        crate::autohide::is_rect_fullscreen(
+            crate::geometry::BarRect::from(rect),
+            crate::geometry::BarRect::from(minfo.rcMonitor),
+        )
     } else {
         false
     }

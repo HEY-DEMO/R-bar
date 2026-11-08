@@ -158,6 +158,31 @@ component PinnedItemButton inherits Rectangle {
     }
 }
 
+component TrayToggleButton inherits Rectangle {
+    callback clicked();
+    in property <bool> is_vertical: false;
+
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    background: touch.pressed ? #ffffff22 : touch.has-hover ? #ffffff15 : #00000000;
+
+    animate background { duration: 120ms; }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+
+    Text {
+        text: "^";
+        font-size: 14px;
+        font-weight: 700;
+        color: #ffffff;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
 export component MainWindow inherits Window {
     title: "Taskbar";
     no-frame: true;
@@ -170,6 +195,7 @@ export component MainWindow inherits Window {
     in property <[PinnedData]> pinned_items: [];
     callback start_clicked();
     callback pinned_clicked(int);
+    callback tray_toggle_clicked();
 
     // Active palette derived from Theme global
     property <ThemePalette> current_palette: Theme.palette(theme_name);
@@ -200,6 +226,11 @@ export component MainWindow inherits Window {
                 is_vertical: false;
                 clicked => { root.pinned_clicked(idx); }
             }
+
+            TrayToggleButton {
+                is_vertical: false;
+                clicked => { root.tray_toggle_clicked(); }
+            }
         }
 
         if is_vertical : VerticalLayout {
@@ -220,6 +251,11 @@ export component MainWindow inherits Window {
                 icon: item.icon;
                 is_vertical: true;
                 clicked => { root.pinned_clicked(idx); }
+            }
+
+            TrayToggleButton {
+                is_vertical: true;
+                clicked => { root.tray_toggle_clicked(); }
             }
         }
     }
