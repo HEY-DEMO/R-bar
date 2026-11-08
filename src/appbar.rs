@@ -104,6 +104,43 @@ pub fn get_monitor_rect(monitor_handle: isize) -> Option<BarRect> {
     }
 }
 
+/// Discovers and returns the monitor handle for the primary display.
+/// Falls back to the first available monitor if no monitor has the primary flag.
+pub fn get_primary_monitor() -> Option<isize> {
+    let monitors = enumerate_display_monitors();
+    for &hmon in &monitors {
+        unsafe {
+            let mut minfo = MONITORINFO {
+                cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+                ..Default::default()
+            };
+            if GetMonitorInfoW(HMONITOR(hmon as *mut _), &mut minfo).as_bool() {
+                // MONITORINFOF_PRIMARY is 0x00000001
+                if (minfo.dwFlags & 1) != 0 {
+                    return Some(hmon);
+                }
+            }
+        }
+    }
+    monitors.first().copied()
+}
+
+/// Returns the screen rectangle for the primary display.
+pub fn get_primary_monitor_rect() -> BarRect {
+    get_primary_monitor()
+        .and_then(get_monitor_rect)
+        .unwrap_or_else(|| {
+            let cx = unsafe { GetSystemMetrics(SM_CXSCREEN) };
+            let cy = unsafe { GetSystemMetrics(SM_CYSCREEN) };
+            BarRect {
+                left: 0,
+                top: 0,
+                right: if cx > 0 { cx } else { 1920 },
+                bottom: if cy > 0 { cy } else { 1080 },
+            }
+        })
+}
+
 /// Retrieves the working area bounds rectangle for the specified monitor handle.
 pub fn get_monitor_work_area(monitor_handle: isize) -> Option<BarRect> {
     if monitor_handle == 0 || monitor_handle == -1 {

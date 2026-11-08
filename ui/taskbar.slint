@@ -466,7 +466,11 @@ export component MainWindow inherits Window {
     no-frame: true;
     always-on-top: true;
     default-font-size: 12px;
-    height: 48px;
+
+    in-out property <length> bar_width: 1920px;
+    in-out property <length> bar_height: 48px;
+    width: root.bar_width;
+    height: root.bar_height;
 
     in-out property <string> theme_name: "Glossy";
     in-out property <bool> is_vertical: false;
@@ -489,6 +493,8 @@ export component MainWindow inherits Window {
     background: current_palette.background;
 
     Rectangle {
+        width: 100%;
+        height: 100%;
         border-width: current_palette.border-width;
         border-color: current_palette.border-color;
         border-radius: current_palette.corner-radius;

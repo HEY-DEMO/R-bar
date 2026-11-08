@@ -88,6 +88,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     app.set_is_vertical(cfg.is_vertical());
     app.set_theme_name(cfg.theme.name().into());
 
+    // Compute primary display AppBar dimensions and position
+    let mon_rect = taskbar_clone::appbar::get_primary_monitor_rect();
+    let bar_rect = taskbar_clone::geometry::calculate_appbar_rect(cfg.edge, cfg.size, mon_rect);
+    let bar_w = bar_rect.width() as u32;
+    let bar_h = bar_rect.height() as u32;
+
+    app.set_bar_width(bar_w as f32);
+    app.set_bar_height(bar_h as f32);
+    app.window()
+        .set_size(slint::PhysicalSize::new(bar_w, bar_h));
+    app.window()
+        .set_position(slint::PhysicalPosition::new(bar_rect.left, bar_rect.top));
+
     // Register Multi-Monitor AppBars
     let mut monitor_mgr = MultiMonitorManager::new(cfg.edge, cfg.size);
     monitor_mgr.spawn_bars();
