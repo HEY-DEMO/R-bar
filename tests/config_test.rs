@@ -104,7 +104,7 @@ fn test_all_dock_edges_and_theme_presets() {
         ThemePreset::Material,
         ThemePreset::Retro,
         ThemePreset::Oled,
-        ThemePreset::Custom,
+        ThemePreset::default_custom(),
     ] {
         let wrapper = ThemeWrapper { theme };
         let serialized = toml::to_string(&wrapper).unwrap();
