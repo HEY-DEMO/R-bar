@@ -64,12 +64,14 @@ fn test_custom_theme_overrides() {
         bg_color: "#123456".to_string(),
         opacity: 0.75,
         border_color: "#654321".to_string(),
+        corner_radius: Some(6.0),
     };
     let def = ThemeDefinition::from_preset(&preset);
     assert_eq!(def.name, "Custom");
     assert_eq!(def.bg_color, "#123456");
     assert_eq!(def.opacity, 0.75);
     assert_eq!(def.border_color, "#654321");
+    assert_eq!(def.corner_radius, 6.0);
     // Acrylic is used when translucent custom theme is configured
     assert_eq!(def.dwm_backdrop, DwmBackdrop::Acrylic);
 }
@@ -86,6 +88,7 @@ fn test_custom_theme_toml_roundtrip() {
             bg_color: "#112233".to_string(),
             opacity: 0.85,
             border_color: "#445566".to_string(),
+            corner_radius: Some(10.0),
         },
     };
 

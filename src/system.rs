@@ -105,6 +105,9 @@ pub fn clamp_volume(level: f32) -> f32 {
     }
 }
 
+/// COM error code indicating that the concurrency model cannot be changed once set.
+pub const RPC_E_CHANGED_MODE: i32 = 0x80010106_u32 as i32;
+
 /// Helper to execute a closure with the default master audio endpoint volume interface.
 /// Safely manages thread COM initialization.
 fn with_master_audio_endpoint<T, F>(f: F) -> Result<T, isize>
@@ -115,7 +118,7 @@ where
         // Initialize COM for this thread. RPC_E_CHANGED_MODE (0x80010106) is acceptable
         // if COM was already initialized with a different apartment threading model.
         let hr = CoInitializeEx(None, COINIT_MULTITHREADED);
-        if hr.is_err() && hr.0 != -2147417850 { // 0x80010106 as i32
+        if hr.is_err() && hr.0 != RPC_E_CHANGED_MODE {
             // Continue anyway to attempt using existing COM context
         }
 

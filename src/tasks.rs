@@ -117,6 +117,25 @@ pub fn get_process_image_name(pid: u32) -> Option<String> {
     }
 }
 
+pub fn is_window_on_current_desktop(hwnd: isize) -> bool {
+    let h = HWND(hwnd as *mut _);
+    let mut cloaked: u32 = 0;
+    let res = unsafe {
+        DwmGetWindowAttribute(
+            h,
+            DWMWA_CLOAKED,
+            &mut cloaked as *mut _ as *mut std::ffi::c_void,
+            std::mem::size_of::<u32>() as u32,
+        )
+    };
+    // On Windows 10/11, windows on other virtual desktops are cloaked by the shell
+    // with DWM_CLOAKED_SHELL (0x00000002).
+    if res.is_ok() && (cloaked & 2) != 0 {
+        return false;
+    }
+    true
+}
+
 pub fn is_qualifying_window(hwnd: isize) -> bool {
     let h = HWND(hwnd as *mut _);
     if unsafe { !IsWindow(h).as_bool() } {

@@ -9,6 +9,16 @@ export struct PinnedData {
     icon: image,
 }
 
+export struct TaskData {
+    title: string,
+    initial: string,
+    app_id: string,
+    window_count: int,
+    has_multiple: bool,
+    is_active: bool,
+    is_minimized: bool,
+}
+
 component StartButton inherits Rectangle {
     callback clicked();
     in property <bool> is_vertical: false;
@@ -158,11 +168,102 @@ component PinnedItemButton inherits Rectangle {
     }
 }
 
+component TaskItemButton inherits Rectangle {
+    in property <string> title;
+    in property <string> initial;
+    in property <int> window_count: 1;
+    in property <bool> has_multiple: false;
+    in property <bool> is_active: false;
+    in property <bool> is_vertical: false;
+    callback clicked();
+
+    width: 44px;
+    height: 40px;
+    border-radius: 4px;
+    background: touch.pressed ? #ffffff25 : touch.has-hover ? #ffffff18 : (is_active ? #ffffff10 : #00000000);
+
+    animate background { duration: 120ms; }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+
+    // App letter/initial badge
+    Rectangle {
+        width: 26px;
+        height: 26px;
+        border-radius: 4px;
+        background: #2a2a2a;
+        border-width: 1px;
+        border-color: #ffffff20;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+
+        Text {
+            text: root.initial;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 600;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+    }
+
+    // Multiple windows badge count
+    if has_multiple : Rectangle {
+        x: parent.width - 15px;
+        y: 3px;
+        width: 14px;
+        height: 14px;
+        border-radius: 7px;
+        background: #0078d4;
+        Text {
+            text: root.window_count;
+            color: #ffffff;
+            font-size: 9px;
+            font-weight: 700;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+    }
+
+    // Active indicator pill
+    if is_active : Rectangle {
+        x: is_vertical ? 0px : (parent.width - 16px) / 2;
+        y: is_vertical ? (parent.height - 16px) / 2 : (parent.height - 3px);
+        width: is_vertical ? 3px : 16px;
+        height: is_vertical ? 16px : 3px;
+        border-radius: 1.5px;
+        background: #60cdff;
+    }
+
+    // Hover tooltip
+    if touch.has-hover && title != "" : Rectangle {
+        y: is_vertical ? 8px : -28px;
+        x: is_vertical ? 48px : (parent.width - self.width) / 2;
+        height: 22px;
+        background: #202020f0;
+        border-radius: 4px;
+        border-width: 1px;
+        border-color: #ffffff20;
+        HorizontalLayout {
+            padding-left: 6px;
+            padding-right: 6px;
+            Text {
+                text: title;
+                color: #ffffff;
+                font-size: 11px;
+                vertical-alignment: center;
+            }
+        }
+    }
+}
+
 component TrayToggleButton inherits Rectangle {
     callback clicked();
     in property <bool> is_vertical: false;
 
-    width: 32px;
+    width: 28px;
     height: 32px;
     border-radius: 4px;
     background: touch.pressed ? #ffffff22 : touch.has-hover ? #ffffff15 : #00000000;
@@ -183,6 +284,61 @@ component TrayToggleButton inherits Rectangle {
     }
 }
 
+component SystemStatusArea inherits Rectangle {
+    in property <string> time_text: "12:00";
+    in property <string> date_text: "2026-11-08";
+    in property <string> battery_text: "";
+    in property <int> volume_percent: 50;
+    in property <bool> is_vertical: false;
+    callback tray_toggle_clicked();
+
+    HorizontalLayout {
+        spacing: 6px;
+        alignment: end;
+
+        TrayToggleButton {
+            is_vertical: root.is_vertical;
+            clicked => { root.tray_toggle_clicked(); }
+        }
+
+        if battery_text != "" : Rectangle {
+            height: 32px;
+            HorizontalLayout {
+                padding-left: 4px;
+                padding-right: 4px;
+                Text {
+                    text: root.battery_text;
+                    color: #e0e0e0;
+                    font-size: 11px;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        // Clock & Date stack
+        Rectangle {
+            height: 36px;
+            VerticalLayout {
+                alignment: center;
+                spacing: 1px;
+                Text {
+                    text: root.time_text;
+                    color: #ffffff;
+                    font-size: 12px;
+                    font-weight: 600;
+                    horizontal-alignment: center;
+                }
+                Text {
+                    text: root.date_text;
+                    color: #b0b0b0;
+                    font-size: 10px;
+                    horizontal-alignment: center;
+                }
+            }
+        }
+    }
+}
+
 export component MainWindow inherits Window {
     title: "Taskbar";
     no-frame: true;
@@ -193,9 +349,17 @@ export component MainWindow inherits Window {
     in-out property <string> theme_name: "Glossy";
     in-out property <bool> is_vertical: false;
     in property <[PinnedData]> pinned_items: [];
+    in property <[TaskData]> tasks: [];
+    in property <string> time_text: "12:00";
+    in property <string> date_text: "2026-11-08";
+    in property <string> battery_text: "";
+    in property <int> volume_percent: 50;
+
     callback start_clicked();
     callback pinned_clicked(int);
+    callback task_clicked(int);
     callback tray_toggle_clicked();
+    callback volume_changed(float);
 
     // Active palette derived from Theme global
     property <ThemePalette> current_palette: Theme.palette(theme_name);
@@ -210,52 +374,100 @@ export component MainWindow inherits Window {
         if !is_vertical : HorizontalLayout {
             padding-left: 8px;
             padding-right: 8px;
-            alignment: start;
-            spacing: 4px;
+            alignment: space-between;
 
-            StartButton {
-                is_vertical: false;
-                clicked => { root.start_clicked(); }
+            // Left / Start & Pinned area
+            HorizontalLayout {
+                spacing: 4px;
+                alignment: start;
+
+                StartButton {
+                    is_vertical: false;
+                    clicked => { root.start_clicked(); }
+                }
+
+                for item[idx] in root.pinned_items: PinnedItemButton {
+                    title: item.title;
+                    initial: item.initial;
+                    has_icon: item.has_icon;
+                    icon: item.icon;
+                    is_vertical: false;
+                    clicked => { root.pinned_clicked(idx); }
+                }
+
+                // Running tasks
+                for item[idx] in root.tasks: TaskItemButton {
+                    title: item.title;
+                    initial: item.initial;
+                    window_count: item.window_count;
+                    has_multiple: item.has_multiple;
+                    is_active: item.is_active;
+                    is_vertical: false;
+                    clicked => { root.task_clicked(idx); }
+                }
             }
 
-            for item[idx] in root.pinned_items: PinnedItemButton {
-                title: item.title;
-                initial: item.initial;
-                has_icon: item.has_icon;
-                icon: item.icon;
+            // Right / System status area
+            SystemStatusArea {
+                time_text: root.time_text;
+                date_text: root.date_text;
+                battery_text: root.battery_text;
+                volume_percent: root.volume_percent;
                 is_vertical: false;
-                clicked => { root.pinned_clicked(idx); }
-            }
-
-            TrayToggleButton {
-                is_vertical: false;
-                clicked => { root.tray_toggle_clicked(); }
+                tray_toggle_clicked => { root.tray_toggle_clicked(); }
             }
         }
 
         if is_vertical : VerticalLayout {
             padding-top: 8px;
             padding-bottom: 8px;
-            alignment: start;
-            spacing: 4px;
+            alignment: space-between;
 
-            StartButton {
-                is_vertical: true;
-                clicked => { root.start_clicked(); }
+            VerticalLayout {
+                spacing: 4px;
+                alignment: start;
+
+                StartButton {
+                    is_vertical: true;
+                    clicked => { root.start_clicked(); }
+                }
+
+                for item[idx] in root.pinned_items: PinnedItemButton {
+                    title: item.title;
+                    initial: item.initial;
+                    has_icon: item.has_icon;
+                    icon: item.icon;
+                    is_vertical: true;
+                    clicked => { root.pinned_clicked(idx); }
+                }
+
+                for item[idx] in root.tasks: TaskItemButton {
+                    title: item.title;
+                    initial: item.initial;
+                    window_count: item.window_count;
+                    has_multiple: item.has_multiple;
+                    is_active: item.is_active;
+                    is_vertical: true;
+                    clicked => { root.task_clicked(idx); }
+                }
             }
 
-            for item[idx] in root.pinned_items: PinnedItemButton {
-                title: item.title;
-                initial: item.initial;
-                has_icon: item.has_icon;
-                icon: item.icon;
-                is_vertical: true;
-                clicked => { root.pinned_clicked(idx); }
-            }
+            VerticalLayout {
+                alignment: end;
+                spacing: 6px;
 
-            TrayToggleButton {
-                is_vertical: true;
-                clicked => { root.tray_toggle_clicked(); }
+                TrayToggleButton {
+                    is_vertical: true;
+                    clicked => { root.tray_toggle_clicked(); }
+                }
+
+                Text {
+                    text: root.time_text;
+                    color: #ffffff;
+                    font-size: 11px;
+                    font-weight: 600;
+                    horizontal-alignment: center;
+                }
             }
         }
     }
