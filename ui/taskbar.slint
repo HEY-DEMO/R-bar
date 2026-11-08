@@ -284,6 +284,121 @@ component TrayToggleButton inherits Rectangle {
     }
 }
 
+component VolumeControl inherits Rectangle {
+    in property <int> volume_percent: 50;
+    in property <bool> is_vertical: false;
+    callback volume_changed(float);
+
+    property <bool> show_flyout: false;
+
+    width: is_vertical ? 36px : 52px;
+    height: 32px;
+    border-radius: 4px;
+    background: touch.pressed ? #ffffff22 : touch.has-hover ? #ffffff15 : #00000000;
+
+    animate background { duration: 120ms; }
+
+    HorizontalLayout {
+        alignment: center;
+        spacing: 2px;
+        padding-left: 4px;
+        padding-right: 4px;
+
+        Text {
+            text: root.volume_percent == 0 ? "🔇" : (root.volume_percent < 50 ? "🔉" : "🔊");
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+
+        if !is_vertical : Text {
+            text: "\{root.volume_percent}%";
+            color: #e0e0e0;
+            font-size: 10px;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        clicked => {
+            root.show_flyout = !root.show_flyout;
+        }
+    }
+
+    // Volume Slider Flyout popup
+    if root.show_flyout : Rectangle {
+        y: is_vertical ? 0px : -75px;
+        x: is_vertical ? 42px : -36px;
+        width: 130px;
+        height: 65px;
+        background: #202020f5;
+        border-radius: 6px;
+        border-width: 1px;
+        border-color: #ffffff25;
+
+        VerticalLayout {
+            padding: 8px;
+            spacing: 6px;
+            alignment: center;
+
+            Text {
+                text: "Volume: \{root.volume_percent}%";
+                color: #ffffff;
+                font-size: 11px;
+                horizontal-alignment: center;
+            }
+
+            // Slider track
+            slider_box := Rectangle {
+                height: 18px;
+                width: 110px;
+
+                // Track background
+                Rectangle {
+                    y: 7px;
+                    height: 4px;
+                    border-radius: 2px;
+                    background: #ffffff33;
+                }
+
+                // Filled level
+                Rectangle {
+                    x: 0px;
+                    y: 7px;
+                    width: (parent.width * root.volume_percent) / 100;
+                    height: 4px;
+                    border-radius: 2px;
+                    background: #0078d4;
+                }
+
+                // Thumb
+                Rectangle {
+                    x: ((parent.width - 12px) * root.volume_percent) / 100;
+                    y: 3px;
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 6px;
+                    background: #ffffff;
+                }
+
+                TouchArea {
+                    moved => {
+                        if self.pressed {
+                            let ratio = self.mouse-x / parent.width;
+                            let clamped = Math.max(0.0, Math.min(1.0, ratio));
+                            root.volume_changed(clamped * 100.0);
+                        }
+                    }
+                    clicked => {
+                        let ratio = self.mouse-x / parent.width;
+                        let clamped = Math.max(0.0, Math.min(1.0, ratio));
+                        root.volume_changed(clamped * 100.0);
+                    }
+                }
+            }
+        }
+    }
+}
+
 component SystemStatusArea inherits Rectangle {
     in property <string> time_text: "12:00";
     in property <string> date_text: "2026-11-08";
@@ -291,6 +406,7 @@ component SystemStatusArea inherits Rectangle {
     in property <int> volume_percent: 50;
     in property <bool> is_vertical: false;
     callback tray_toggle_clicked();
+    callback volume_changed(float);
 
     HorizontalLayout {
         spacing: 6px;
@@ -299,6 +415,12 @@ component SystemStatusArea inherits Rectangle {
         TrayToggleButton {
             is_vertical: root.is_vertical;
             clicked => { root.tray_toggle_clicked(); }
+        }
+
+        VolumeControl {
+            volume_percent: root.volume_percent;
+            is_vertical: root.is_vertical;
+            volume_changed(vol) => { root.volume_changed(vol); }
         }
 
         if battery_text != "" : Rectangle {
@@ -415,6 +537,7 @@ export component MainWindow inherits Window {
                 volume_percent: root.volume_percent;
                 is_vertical: false;
                 tray_toggle_clicked => { root.tray_toggle_clicked(); }
+                volume_changed(vol) => { root.volume_changed(vol); }
             }
         }
 
@@ -459,6 +582,12 @@ export component MainWindow inherits Window {
                 TrayToggleButton {
                     is_vertical: true;
                     clicked => { root.tray_toggle_clicked(); }
+                }
+
+                VolumeControl {
+                    volume_percent: root.volume_percent;
+                    is_vertical: true;
+                    volume_changed(vol) => { root.volume_changed(vol); }
                 }
 
                 Text {
