@@ -27,24 +27,22 @@ pub enum TaskAlignment {
     Center,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ThemePreset {
-    Glossy,
-    Material,
-    Retro,
-    Oled,
-    Custom,
-}
+pub use crate::theme::ThemePreset;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PinnedItem {
+    #[serde(alias = "name")]
     pub title: String,
     pub path: String,
+    #[serde(default)]
     pub args: String,
+    #[serde(default)]
     pub icon: String,
+    #[serde(default, alias = "working_directory")]
+    pub working_dir: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Config {
     pub edge: DockEdge,
     pub alignment: TaskAlignment,

@@ -1,21 +1,228 @@
-export component MainWindow inherits Window {
-    title: "Taskbar";
-    no-frame: true;
-    always-on-top: true;
-    background: #1e1e1ecc;
-    default-font-size: 12px;
-    height: 48px;
+import { Theme, ThemePalette } from "theme.slint";
 
-    HorizontalLayout {
-        padding-left: 16px;
-        padding-right: 16px;
-        alignment: center;
+export { Theme, ThemePalette }
 
-        Text {
-            text: "Taskbar Clone";
-            color: #ffffff;
-            vertical-alignment: center;
+export struct PinnedData {
+    title: string,
+    initial: string,
+    has_icon: bool,
+    icon: image,
+}
+
+component StartButton inherits Rectangle {
+    callback clicked();
+    in property <bool> is_vertical: false;
+
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    background: touch.pressed ? #ffffff22 : touch.has-hover ? #ffffff15 : #00000000;
+
+    animate background { duration: 120ms; }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+
+    // Windows 11 4-tile logo
+    Rectangle {
+        width: 18px;
+        height: 18px;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+
+        // Top-left
+        Rectangle {
+            x: 0px;
+            y: 0px;
+            width: 8px;
+            height: 8px;
+            border-radius: 1px;
+            background: #0078d4;
+        }
+        // Top-right
+        Rectangle {
+            x: 10px;
+            y: 0px;
+            width: 8px;
+            height: 8px;
+            border-radius: 1px;
+            background: #0078d4;
+        }
+        // Bottom-left
+        Rectangle {
+            x: 0px;
+            y: 10px;
+            width: 8px;
+            height: 8px;
+            border-radius: 1px;
+            background: #0078d4;
+        }
+        // Bottom-right
+        Rectangle {
+            x: 10px;
+            y: 10px;
+            width: 8px;
+            height: 8px;
+            border-radius: 1px;
+            background: #0078d4;
+        }
+    }
+
+    if touch.has-hover : Rectangle {
+        y: is_vertical ? 8px : -28px;
+        x: is_vertical ? 46px : (parent.width - self.width) / 2;
+        height: 22px;
+        background: #202020f0;
+        border-radius: 4px;
+        border-width: 1px;
+        border-color: #ffffff20;
+        HorizontalLayout {
+            padding-left: 6px;
+            padding-right: 6px;
+            Text {
+                text: "Start";
+                color: #ffffff;
+                font-size: 11px;
+                vertical-alignment: center;
+            }
         }
     }
 }
 
+component PinnedItemButton inherits Rectangle {
+    in property <string> title;
+    in property <string> initial;
+    in property <bool> has_icon;
+    in property <image> icon;
+    in property <bool> is_vertical: false;
+    callback clicked();
+
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    background: touch.pressed ? #ffffff22 : touch.has-hover ? #ffffff15 : #00000000;
+
+    animate background { duration: 120ms; }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+
+    if has_icon : Image {
+        source: root.icon;
+        width: 24px;
+        height: 24px;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+    }
+
+    if !has_icon : Rectangle {
+        width: 26px;
+        height: 26px;
+        border-radius: 4px;
+        background: #2d2d2d;
+        border-width: 1px;
+        border-color: #ffffff18;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+
+        Text {
+            text: root.initial;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 600;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+    }
+
+    if touch.has-hover && title != "" : Rectangle {
+        y: is_vertical ? 8px : -28px;
+        x: is_vertical ? 46px : (parent.width - self.width) / 2;
+        height: 22px;
+        background: #202020f0;
+        border-radius: 4px;
+        border-width: 1px;
+        border-color: #ffffff20;
+        HorizontalLayout {
+            padding-left: 6px;
+            padding-right: 6px;
+            Text {
+                text: title;
+                color: #ffffff;
+                font-size: 11px;
+                vertical-alignment: center;
+            }
+        }
+    }
+}
+
+export component MainWindow inherits Window {
+    title: "Taskbar";
+    no-frame: true;
+    always-on-top: true;
+    default-font-size: 12px;
+    height: 48px;
+
+    in-out property <string> theme_name: "Glossy";
+    in-out property <bool> is_vertical: false;
+    in property <[PinnedData]> pinned_items: [];
+    callback start_clicked();
+    callback pinned_clicked(int);
+
+    // Active palette derived from Theme global
+    property <ThemePalette> current_palette: Theme.palette(theme_name);
+
+    background: current_palette.background;
+
+    Rectangle {
+        border-width: current_palette.border-width;
+        border-color: current_palette.border-color;
+        border-radius: current_palette.corner-radius;
+
+        if !is_vertical : HorizontalLayout {
+            padding-left: 8px;
+            padding-right: 8px;
+            alignment: start;
+            spacing: 4px;
+
+            StartButton {
+                is_vertical: false;
+                clicked => { root.start_clicked(); }
+            }
+
+            for item[idx] in root.pinned_items: PinnedItemButton {
+                title: item.title;
+                initial: item.initial;
+                has_icon: item.has_icon;
+                icon: item.icon;
+                is_vertical: false;
+                clicked => { root.pinned_clicked(idx); }
+            }
+        }
+
+        if is_vertical : VerticalLayout {
+            padding-top: 8px;
+            padding-bottom: 8px;
+            alignment: start;
+            spacing: 4px;
+
+            StartButton {
+                is_vertical: true;
+                clicked => { root.start_clicked(); }
+            }
+
+            for item[idx] in root.pinned_items: PinnedItemButton {
+                title: item.title;
+                initial: item.initial;
+                has_icon: item.has_icon;
+                icon: item.icon;
+                is_vertical: true;
+                clicked => { root.pinned_clicked(idx); }
+            }
+        }
+    }
+}
+
+export component TaskbarWindow inherits MainWindow {}
