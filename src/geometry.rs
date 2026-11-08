@@ -26,6 +26,10 @@ impl BarRect {
     pub fn height(&self) -> i32 {
         self.bottom - self.top
     }
+
+    pub fn contains(&self, x: i32, y: i32) -> bool {
+        x >= self.left && x <= self.right && y >= self.top && y <= self.bottom
+    }
 }
 
 #[cfg(windows)]
