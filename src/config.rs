@@ -38,10 +38,15 @@ pub enum ThemePreset {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PinnedItem {
+    #[serde(alias = "name")]
     pub title: String,
     pub path: String,
+    #[serde(default)]
     pub args: String,
+    #[serde(default)]
     pub icon: String,
+    #[serde(default, alias = "working_directory")]
+    pub working_dir: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
