@@ -31,6 +31,30 @@ pub struct GroupedTask {
     pub windows: Vec<TaskItem>,
 }
 
+impl GroupedTask {
+    pub fn window_count(&self) -> usize {
+        self.windows.len()
+    }
+
+    pub fn has_multiple_windows(&self) -> bool {
+        self.windows.len() > 1
+    }
+
+    pub fn is_active(&self) -> bool {
+        self.windows.iter().any(|w| w.is_active)
+    }
+
+    pub fn active_window(&self) -> Option<&TaskItem> {
+        self.windows.iter().find(|w| w.is_active)
+    }
+
+    pub fn primary_window(&self) -> Option<&TaskItem> {
+        self.active_window().or_else(|| self.windows.first())
+    }
+}
+
+pub use crate::controls::*;
+
 pub fn check_window_qualification_criteria(
     is_visible: bool,
     ex_style: u32,

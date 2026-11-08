@@ -1,5 +1,6 @@
 pub mod appbar;
 pub mod config;
+pub mod controls;
 pub mod events;
 pub mod geometry;
 pub mod shell;
