@@ -4,11 +4,18 @@
 
 **Blocked by:** 01: Minimal Taskbar Loop & Crash Watchdog
 
-**Status:** ready-for-agent
+**Status:** closed
 
-- [ ] Generates a default `config.toml` file in the user's application data directory if none exists.
-- [ ] Parses configuration options for dock edge (`Bottom`, `Top`, `Left`, `Right`), task alignment (`Left`, `Center`), bar thickness, and theme preset.
-- [ ] Computes exact window coordinate rectangles for all four screen edges based on monitor bounds and configured thickness.
-- [ ] Adjusts the UI layout orientation automatically: horizontal row for Top/Bottom edges, vertical column for Left/Right edges.
-- [ ] Fallbacks gracefully to sensible defaults when configuration files are missing or contain malformed syntax.
+- [x] Generates a default `config.toml` file in the user's application data directory if none exists.
+- [x] Parses configuration options for dock edge (`Bottom`, `Top`, `Left`, `Right`), task alignment (`Left`, `Center`), bar thickness, and theme preset.
+- [x] Computes exact window coordinate rectangles for all four screen edges based on monitor bounds and configured thickness.
+- [x] Adjusts the UI layout orientation automatically: horizontal row for Top/Bottom edges, vertical column for Left/Right edges.
+- [x] Fallbacks gracefully to sensible defaults when configuration files are missing or contain malformed syntax.
+
+## Comments
+
+- Implementation commit: `2b757ae`
+- Merge commit into `feat/taskbar-clone`: `1e74e53`
+- All tests in `tests/config_test.rs` (7 tests) and `tests/geometry_test.rs` (4 tests) along with existing shell tests passing cleanly.
+- Resolved and merged into integration branch `feat/taskbar-clone`.
 
