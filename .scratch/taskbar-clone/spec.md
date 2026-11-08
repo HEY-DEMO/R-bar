@@ -1,6 +1,6 @@
 # Spec: Windows 11 Taskbar Clone
 
-**Status:** ready-for-agent
+**Status:** completed
 
 ## Problem Statement
 
