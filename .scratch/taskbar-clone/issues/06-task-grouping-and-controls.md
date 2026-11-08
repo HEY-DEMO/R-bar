@@ -15,6 +15,7 @@
 ## Comments
 
 ### Resolution
+- Merged branch `ticket-06` into `feat/taskbar-clone` at commit `587749b` (source commit `e9d2566`).
 - Implemented task grouping helper methods and indicators on `GroupedTask` in `src/tasks.rs`:
   - `window_count(&self) -> usize`: Returns count of window instances in group for count badge display.
   - `has_multiple_windows(&self) -> bool`: Visual indicator check for multi-window groups.
@@ -34,5 +35,5 @@
   - `test_task_click_state_mutation`
   - `test_window_commands_and_syscommand_codes`
   - `test_multi_window_grouping_clusters_and_controls`
-- All tests pass (31 tests passing across 7 test suites), and `cargo clippy --all-targets` passes with 0 warnings.
+- All 45 tests pass across 9 test suites via `cargo test`, and `cargo clippy --all-targets` passes with 0 warnings.
 
